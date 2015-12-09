@@ -50,15 +50,19 @@ public class QuiltLayout: UICollectionViewLayout {
     public override func collectionViewContentSize() -> CGSize {
         
         let isVertical = direction == .Vertical
+        let result: CGSize
         if let cv = collectionView {
             let contentRect = UIEdgeInsetsInsetRect(cv.frame, cv.contentInset)
             if isVertical {
-                return CGSize(width: CGRectGetWidth(contentRect), height: blockPixels.height * (furthestBlockPoint.y+1))
+                result = CGSize(width: CGRectGetWidth(contentRect), height: blockPixels.height * (furthestBlockPoint.y+1))
             } else {
-                CGSize(width: blockPixels.width * (furthestBlockPoint.x+1), height: CGRectGetHeight(contentRect))
+                // TODO: Check if we should assign CGSizeZero here
+                result = CGSize(width: blockPixels.width * (furthestBlockPoint.x+1), height: CGRectGetHeight(contentRect))
             }
+        } else {
+            result = CGSizeZero
         }
-        return CGSizeZero
+        return result
     }
     
     public override func layoutAttributesForElementsInRect(rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
@@ -184,7 +188,9 @@ public class QuiltLayout: UICollectionViewLayout {
         return indexPathByPosition?[restrictedPoint]?[unrestrictedPoint]
     }
     
-    private func fillInBlocks(toIndexPath indexPath: NSIndexPath) {
+    private func fillInBlocks(toIndexPath indexPath: NSIndexPath?) {
+        guard let indexPath = indexPath else { return }
+        
         // we'll have our data structure as if we're planning
         // a vertical layout, then when we assign positions to
         // the items we'll invert the axis
@@ -300,8 +306,7 @@ public class QuiltLayout: UICollectionViewLayout {
     private func traverseOpenTiles(iterator: CGPoint -> Bool) -> Bool {
         var allTakenBefore = true
         let isVertical = direction == .Vertical
-        var unrestrictedDimensionStart = Int(isVertical ? firstOpenSpace.y : firstOpenSpace.x)
-        for unrestrictedDimensionStart; ; unrestrictedDimensionStart++ {
+        for var unrestrictedDimensionStart = Int(isVertical ? firstOpenSpace.y : firstOpenSpace.x); ; unrestrictedDimensionStart++ {
             for restrictedDimension in 0..<restrictedDimensionBlockSize() {
                 let point = CGPoint(x: isVertical ? restrictedDimension : unrestrictedDimensionStart, y: isVertical ? unrestrictedDimensionStart : restrictedDimension)
                 
